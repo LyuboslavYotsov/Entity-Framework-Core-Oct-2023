@@ -1,14 +1,14 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Invoices.Data.Models;
+using System.ComponentModel.DataAnnotations;
 using System.Xml.Serialization;
 
 namespace Invoices.DataProcessor.ImportDto
 {
-    [XmlType("Address")]
-    public class ImportAddressDto
+    [XmlType(nameof(Address))]
+    public class ImportClientAddressDto
     {
         [Required]
-        [MaxLength(20)]
-        [MinLength(10)]
+        [StringLength(20, MinimumLength = 10)]
         public string StreetName { get; set; } = null!;
 
         [Required]
@@ -18,13 +18,11 @@ namespace Invoices.DataProcessor.ImportDto
         public string PostCode { get; set; } = null!;
 
         [Required]
-        [MaxLength(15)]
-        [MinLength(5)]
+        [StringLength(15, MinimumLength = 5)]
         public string City { get; set; } = null!;
 
         [Required]
-        [MaxLength(15)]
-        [MinLength(5)]
+        [StringLength(15, MinimumLength = 5)]
         public string Country { get; set; } = null!;
     }
 }

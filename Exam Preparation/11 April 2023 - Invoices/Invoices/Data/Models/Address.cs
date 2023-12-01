@@ -9,8 +9,7 @@ namespace Invoices.Data.Models
         public int Id { get; set; }
 
         [Required]
-        [MaxLength(20)]
-        [MinLength(10)]
+        [StringLength(20, MinimumLength = 10)]
         public string StreetName { get; set; } = null!;
 
         [Required]
@@ -20,14 +19,13 @@ namespace Invoices.Data.Models
         public string PostCode { get; set; } = null!;
 
         [Required]
-        [MaxLength(15)]
-        [MinLength(5)]
+        [StringLength(15, MinimumLength = 5)]
         public string City { get; set; } = null!;
 
         [Required]
-        [MaxLength(15)]
-        [MinLength(5)]
+        [StringLength(15, MinimumLength = 5)]
         public string Country { get; set; } = null!;
+
 
         [Required]
         public int ClientId { get; set; }
@@ -36,3 +34,4 @@ namespace Invoices.Data.Models
         public Client Client { get; set; } = null!;
     }
 }
+

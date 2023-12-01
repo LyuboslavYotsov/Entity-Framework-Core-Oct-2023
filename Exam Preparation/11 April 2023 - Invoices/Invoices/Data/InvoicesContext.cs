@@ -6,13 +6,13 @@ namespace Invoices.Data
 {
     public class InvoicesContext : DbContext
     {
-        public InvoicesContext()
-        {
+        public InvoicesContext() 
+        { 
         }
 
         public InvoicesContext(DbContextOptions options)
             : base(options)
-        {
+        { 
         }
 
         public DbSet<Address> Addresses { get; set; } = null!;
@@ -33,7 +33,8 @@ namespace Invoices.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<ProductClient>()
-                .HasKey(pc => new { pc.ClientId, pc.ProductId });
+                .HasKey(pc => new {pc.ClientId, pc.ProductId});
+                  
         }
     }
 }

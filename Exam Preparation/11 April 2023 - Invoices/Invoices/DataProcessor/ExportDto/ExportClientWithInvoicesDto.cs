@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
+﻿using System.Xml.Serialization;
 
 namespace Invoices.DataProcessor.ExportDto
 {
     [XmlType("Client")]
-    public class ExportClientsWithInvoicesDto
+    public class ExportClientWithInvoicesDto
     {
         [XmlAttribute]
         public int InvoicesCount { get; set; }
@@ -17,7 +12,7 @@ namespace Invoices.DataProcessor.ExportDto
 
         public string VatNumber { get; set; } = null!;
 
-        [XmlArray("Invoices")]
+        [XmlArray]
         public ExportInvoiceDto[] Invoices { get; set; } = null!;
     }
 }

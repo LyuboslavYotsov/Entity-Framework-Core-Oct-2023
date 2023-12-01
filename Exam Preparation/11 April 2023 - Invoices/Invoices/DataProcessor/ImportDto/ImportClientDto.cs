@@ -4,21 +4,18 @@ using System.Xml.Serialization;
 
 namespace Invoices.DataProcessor.ImportDto
 {
-    [XmlType("Client")]
+    [XmlType(nameof(Client))]
     public class ImportClientDto
     {
         [Required]
-        [MaxLength(25)]
-        [MinLength(10)]
-        [XmlElement("Name")]
+        [StringLength(25, MinimumLength = 10)]
         public string Name { get; set; } = null!;
 
         [Required]
-        [MaxLength(15)]
-        [MinLength(10)]
+        [StringLength(15, MinimumLength = 10)]
         public string NumberVat { get; set; } = null!;
 
         [XmlArray("Addresses")]
-        public ImportAddressDto[] Addresses { get; set; } = null!;
+        public ImportClientAddressDto[] Addresses { get; set; } = null!;
     }
 }

@@ -3,7 +3,7 @@ using System.Xml.Serialization;
 
 namespace Invoices.Extensions
 {
-    public static class XmlSerializerExtension
+    public static class XmlSerializingExtension
     {
         public static string SerializeXml<T>(this T data, string rootElement) where T : class
         {

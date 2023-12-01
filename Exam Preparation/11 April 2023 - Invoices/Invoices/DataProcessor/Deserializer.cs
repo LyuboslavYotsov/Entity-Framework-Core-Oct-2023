@@ -1,9 +1,7 @@
 ﻿namespace Invoices.DataProcessor
 {
     using System.ComponentModel.DataAnnotations;
-    using System.Globalization;
     using System.Text;
-    using System.Xml;
     using Invoices.Data;
     using Invoices.Data.Models;
     using Invoices.DataProcessor.ImportDto;
@@ -28,11 +26,11 @@
         {
             StringBuilder result = new StringBuilder();
 
-            var importClientsDtos = xmlString.DeserializeXml<ImportClientDto[]>("Clients");
+            ImportClientDto[]? clientsDtos = xmlString.DeserializeXml<ImportClientDto[]>("Clients");
 
-            ICollection<Client> validCLients = new HashSet<Client>();
+            ICollection<Client> validClients = new HashSet<Client>();
 
-            foreach (var clientDto in importClientsDtos)
+            foreach (var clientDto in clientsDtos)
             {
                 if (!IsValid(clientDto))
                 {
@@ -43,14 +41,12 @@
                 Client newClient = new Client()
                 {
                     Name = clientDto.Name,
-                    NumberVat = clientDto.NumberVat
+                    NumberVat = clientDto.NumberVat,
                 };
 
-
-
-                foreach (var addressDto in clientDto.Addresses)
+                foreach (var clientAddress in clientDto.Addresses)
                 {
-                    if (!IsValid(addressDto))
+                    if (!IsValid(clientAddress))
                     {
                         result.AppendLine(ErrorMessage);
                         continue;
@@ -58,20 +54,24 @@
 
                     Address newAddress = new Address()
                     {
-                        StreetName = addressDto.StreetName,
-                        StreetNumber = addressDto.StreetNumber,
-                        PostCode = addressDto.PostCode,
-                        City = addressDto.City,
-                        Country = addressDto.Country,
+                        StreetName = clientAddress.StreetName,
+                        StreetNumber = clientAddress.StreetNumber,
+                        PostCode = clientAddress.PostCode,
+                        City = clientAddress.City,
+                        Country = clientAddress.Country
                     };
+
                     newClient.Addresses.Add(newAddress);
                 }
-                validCLients.Add(newClient);
+
+                validClients.Add(newClient);
                 result.AppendLine(string.Format(SuccessfullyImportedClients, newClient.Name));
             }
 
-            context.Clients.AddRange(validCLients);
+            context.Clients.AddRange(validClients);
+
             context.SaveChanges();
+
             return result.ToString();
         }
 
@@ -79,14 +79,17 @@
         public static string ImportInvoices(InvoicesContext context, string jsonString)
         {
             StringBuilder result = new StringBuilder();
+
+            ImportInvoiceDto[]? invoicesDtos = JsonConvert.DeserializeObject<ImportInvoiceDto[]>(jsonString);
+
+            int[] validClientsIds = context.Clients.Select(c => c.Id).ToArray();
+
             ICollection<Invoice> validInvoices = new HashSet<Invoice>();
 
-            var importInvoicesDtos = JsonConvert.DeserializeObject<ImportInvoiceDto[]>(jsonString);
-
-            foreach (var importInvoiceDto in importInvoicesDtos)
+            foreach (var invoiceDto in invoicesDtos)
             {
-                if (!IsValid(importInvoiceDto) || importInvoiceDto.DueDate < importInvoiceDto.IssueDate
-                    || importInvoiceDto.DueDate == DateTime.MinValue || importInvoiceDto.IssueDate == DateTime.MinValue)
+                if (!IsValid(invoiceDto) || invoiceDto.IssueDate == DateTime.MinValue || invoiceDto.DueDate == DateTime.MinValue
+                    || invoiceDto.DueDate < invoiceDto.IssueDate || !validClientsIds.Contains(invoiceDto.ClientId))
                 {
                     result.AppendLine(ErrorMessage);
                     continue;
@@ -94,12 +97,12 @@
 
                 Invoice newInvoice = new Invoice()
                 {
-                    Number = importInvoiceDto.Number,
-                    IssueDate = importInvoiceDto.IssueDate,
-                    DueDate = importInvoiceDto.DueDate,
-                    Amount = importInvoiceDto.Amount,
-                    CurrencyType = importInvoiceDto.CurrencyType,
-                    ClientId = importInvoiceDto.ClientId
+                    Number = invoiceDto.Number,
+                    IssueDate = invoiceDto.IssueDate,
+                    DueDate = invoiceDto.DueDate,
+                    Amount = invoiceDto.Amount,
+                    CurrencyType = invoiceDto.CurrencyType,
+                    ClientId = invoiceDto.ClientId
                 };
 
                 validInvoices.Add(newInvoice);
@@ -107,22 +110,25 @@
             }
 
             context.Invoices.AddRange(validInvoices);
+
             context.SaveChanges();
+
             return result.ToString();
         }
 
         public static string ImportProducts(InvoicesContext context, string jsonString)
         {
             StringBuilder result = new StringBuilder();
+
+            ImportProductWithClientsDto[]? productsDtos = JsonConvert.DeserializeObject<ImportProductWithClientsDto[]>(jsonString);
+
+            int[] validClientsIds = context.Clients.Select(c => c.Id).ToArray();
+
             ICollection<Product> validProducts = new HashSet<Product>();
 
-            int[] validClients = context.Clients.Select(c => c.Id).ToArray();
-
-            ImportProductDto[]? importProductDtos = JsonConvert.DeserializeObject<ImportProductDto[]>(jsonString);
-
-            foreach (var importProductDto in importProductDtos)
+            foreach (var productDto in productsDtos)
             {
-                if (!IsValid(importProductDto))
+                if (!IsValid(productDto))
                 {
                     result.AppendLine(ErrorMessage);
                     continue;
@@ -130,34 +136,32 @@
 
                 Product newProduct = new Product()
                 {
-                    Name = importProductDto.Name,
-                    Price = importProductDto.Price,
-                    CategoryType = importProductDto.CategoryType
+                    Name = productDto.Name,
+                    Price = productDto.Price,
+                    CategoryType = productDto.CategoryType
                 };
 
-                foreach (var clientId in importProductDto.Clients.Distinct())
+                foreach (var clientId in productDto.ClientsIds.Distinct())
                 {
-                    if (!validClients.Contains(clientId))
+                    if (!validClientsIds.Contains(clientId))
                     {
                         result.AppendLine(ErrorMessage);
                         continue;
                     }
 
-                    ProductClient newProductClient = new ProductClient()
+                    newProduct.ProductsClients.Add(new ProductClient()
                     {
-                        ClientId = clientId,
                         Product = newProduct,
-                    };
-
-                    newProduct.ProductsClients.Add(newProductClient);
+                        ClientId = clientId
+                    });
                 }
 
                 validProducts.Add(newProduct);
                 result.AppendLine(string.Format(SuccessfullyImportedProducts, newProduct.Name, newProduct.ProductsClients.Count));
-
             }
 
             context.Products.AddRange(validProducts);
+
             context.SaveChanges();
 
             return result.ToString();
@@ -170,5 +174,5 @@
 
             return Validator.TryValidateObject(dto, validationContext, validationResult, true);
         }
-    }
+    } 
 }

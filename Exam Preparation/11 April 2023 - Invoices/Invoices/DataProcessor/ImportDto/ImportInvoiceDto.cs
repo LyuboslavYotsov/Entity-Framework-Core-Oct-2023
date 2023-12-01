@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Invoices.DataProcessor.ImportDto
 {
-    
     public class ImportInvoiceDto
     {
         [Required]
